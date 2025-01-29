@@ -13,11 +13,4 @@ WORKDIR /app
 
 COPY --from=builder /app/target/*.jar app.jar
 
-ENV PORT=8080
-ENV DB_URL=$DB_URL
-ENV DB_USER=$DB_USER
-ENV DB_PASSWORD=$DB_PASSWORD
-
-EXPOSE $PORT
-
 ENTRYPOINT [ "java", "-jar", "app.jar" ]
