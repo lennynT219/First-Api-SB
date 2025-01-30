@@ -1,29 +1,29 @@
-# Stage 1: Build the application
-FROM eclipse-temurin:23-jdk AS builder
-
-# Set the working directory
+# Etapa de construcción
+FROM maven:3.8.4-openjdk-17 AS build
 WORKDIR /app
 
-# Copy the application code
-COPY . .
+# Copiar solo el pom.xml y descargar las dependencias
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
-# Given permissions to mvnw
-RUN chmod +x mvnw
+# Copiar el código fuente y construir el proyecto
+COPY src /app/src
+RUN mvn package -DskipTests
 
-# Build the application (requires Maven or Gradle)
-RUN ./mvnw clean package -DskipTests
-
-# Stage 2: Run the application
-FROM eclipse-temurin:23-jre
-
-# Set the working directory
+# Etapa de ejecución
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 
-# Copy the JAR file from the builder stage
-COPY --from=builder /app/target/*.jar app.jar
+# Copiar el JAR construido desde la etapa de construcción
+COPY --from=build /app/target/*.jar /app/app.jar
 
-# Expose the port the app will run on
+# Variables de entorno para la conexión a la base de datos
+ENV SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+ENV SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+ENV SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+
+# Puerto expuesto
 EXPOSE 8080
 
-# Command to run the application
+# Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
